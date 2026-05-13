@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Gallery - AI Textile Design Studio</title>
+  <meta name="description" content="View your personal collection of AI-generated textile designs.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .gallery-page {
+      min-height: calc(100vh - 80px);
+      padding: 40px 20px;
+    }
+
+    .gallery-header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .gallery-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 3rem;
+      color: var(--color-gold);
+      margin-bottom: 10px;
+    }
+
+    .gallery-header p {
+      color: var(--color-text-muted);
+      font-size: 1.1rem;
+    }
+
+    .gallery-stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 25px;
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--color-gold);
+      display: block;
+    }
+
+    .stat-label {
+      color: var(--color-text-muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Gallery Grid */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 25px;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    .gallery-card {
+      background: rgba(26, 31, 58, 0.6);
+      border: 1px solid var(--color-border);
+      border-radius: 15px;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .gallery-card:hover {
+      transform: translateY(-8px);
+      border-color: var(--color-gold);
+      box-shadow: 0 12px 35px rgba(212, 175, 55, 0.15);
+    }
+
+    .gallery-card-img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .gallery-card:hover .gallery-card-img {
+      transform: scale(1.05);
+    }
+
+    .gallery-card-body {
+      padding: 18px;
+    }
+
+    .gallery-card-prompt {
+      color: var(--color-text);
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+
+    .gallery-card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .gallery-card-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .gallery-tag {
+      background: rgba(212, 175, 55, 0.15);
+      color: var(--color-gold);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .gallery-card-date {
+      color: var(--color-text-muted);
+      font-size: 0.75rem;
+    }
+
+    .gallery-card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .gallery-card-actions .btn {
+      flex: 1;
+      font-size: 0.8rem;
+      padding: 6px 10px;
+    }
+
+    .btn-delete {
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      background: transparent;
+      transition: all 0.3s ease;
+    }
+
+    .btn-delete:hover {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border-color: #ef4444;
+    }
+
+    /* Overlay on hover */
+    .gallery-card-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      aspect-ratio: 1;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .gallery-card:hover .gallery-card-overlay {
+      opacity: 1;
+    }
+
+    .gallery-card-overlay .btn {
+      font-size: 0.85rem;
+    }
+
+    /* Empty State */
+    .empty-gallery {
+      text-align: center;
+      padding: 80px 20px;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    .empty-gallery i {
+      font-size: 5rem;
+      color: var(--color-gold);
+      opacity: 0.3;
+      margin-bottom: 25px;
+    }
+
+    .empty-gallery h3 {
+      color: var(--color-text);
+      margin-bottom: 15px;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .empty-gallery p {
+      color: var(--color-text-muted);
+      max-width: 400px;
+      margin: 0 auto 25px;
+    }
+
+    /* Login Required State */
+    .login-required {
+      text-align: center;
+      padding: 100px 20px;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    .login-required i {
+      font-size: 4rem;
+      color: var(--color-gold);
+      opacity: 0.4;
+      margin-bottom: 20px;
+    }
+
+    .login-required h3 {
+      color: var(--color-text);
+      margin-bottom: 10px;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .login-required p {
+      color: var(--color-text-muted);
+      margin-bottom: 25px;
+    }
+
+    /* Loading State */
+    .gallery-loading {
+      text-align: center;
+      padding: 80px 20px;
+    }
+
+    .gallery-loading .spinner-animation {
+      width: 50px;
+      height: 50px;
+      margin: 0 auto 20px;
+      border: 3px solid rgba(212, 175, 55, 0.3);
+      border-top-color: var(--color-gold);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .gallery-loading p {
+      color: var(--color-gold);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      .gallery-header h1 {
+        font-size: 2rem;
+      }
+      .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 15px;
+      }
+      .gallery-stats {
+        gap: 25px;
+      }
+      .stat-number {
+        font-size: 2rem;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .gallery-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html">
+        <span class="brand-icon">✨</span> AI Textile Studio
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="studio.html">Design Studio</a></li>
+          <li class="nav-item"><a class="nav-link active" href="gallery.html" style="color: var(--color-gold) !important; border-bottom: 2px solid var(--color-gold);">My Gallery</a></li>
+          <li class="nav-item"><a class="nav-link" href="inspirations.html">Inspirations</a></li>
+          <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
+          <li class="nav-item ms-3" id="authNav">
+            <button class="btn btn-gold btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Gallery Page -->
+  <div class="gallery-page">
+    <div class="container">
+
+      <!-- Login Required State (shown if not logged in) -->
+      <div class="login-required" id="loginRequiredState" style="display: none;">
+        <i class="fas fa-lock"></i>
+        <h3>Login Required</h3>
+        <p>Please log in to view your personal design gallery.</p>
+        <button class="btn btn-gold" data-bs-toggle="modal" data-bs-target="#loginModal">
+          <i class="fas fa-sign-in-alt me-2"></i>Login
+        </button>
+      </div>
+
+      <!-- Gallery Content (shown if logged in) -->
+      <div id="galleryContent" style="display: none;">
+        <div class="gallery-header">
+          <h1><i class="fas fa-palette me-3"></i>My Gallery</h1>
+          <p>Your personal collection of AI-generated textile designs</p>
+          <div class="gallery-stats">
+            <div class="stat-item">
+              <span class="stat-number" id="totalDesigns">0</span>
+              <span class="stat-label">Total Designs</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number" id="totalRegions">0</span>
+              <span class="stat-label">Regions Explored</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="gallery-loading" id="galleryLoading">
+          <div class="spinner-animation"></div>
+          <p>Loading your designs...</p>
+        </div>
+
+        <!-- Empty Gallery State -->
+        <div class="empty-gallery" id="emptyGallery" style="display: none;">
+          <i class="fas fa-images"></i>
+          <h3>No Designs Yet</h3>
+          <p>Start creating beautiful textile designs and they'll appear here in your personal gallery.</p>
+          <a href="studio.html" class="btn btn-gold">
+            <i class="fas fa-wand-magic-sparkles me-2"></i>Create Your First Design
+          </a>
+        </div>
+
+        <!-- Gallery Grid -->
+        <div class="gallery-grid" id="galleryGrid" style="display: none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div class="modal fade" id="loginModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-dark">
+        <div class="modal-header">
+          <h5 class="modal-title text-gold">Welcome</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <ul class="nav nav-tabs nav-dark mb-4" id="authTabs">
+            <li class="nav-item">
+              <a class="nav-link active" data-bs-toggle="tab" href="#login">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-bs-toggle="tab" href="#signup">Sign Up</a>
+            </li>
+          </ul>
+          <div id="login" class="tab-pane fade show active">
+            <form id="loginForm">
+              <div class="mb-3">
+                <input type="email" class="form-control form-control-dark" placeholder="Email" id="loginEmail" required>
+              </div>
+              <div class="mb-3">
+                <input type="password" class="form-control form-control-dark" placeholder="Password" id="loginPassword" required>
+              </div>
+              <button type="submit" class="btn btn-gold w-100">Login</button>
+            </form>
+          </div>
+          <div id="signup" class="tab-pane fade">
+            <form id="signupForm">
+              <div class="mb-3">
+                <input type="text" class="form-control form-control-dark" placeholder="Full Name" id="signupName" required>
+              </div>
+              <div class="mb-3">
+                <input type="email" class="form-control form-control-dark" placeholder="Email" id="signupEmail" required>
+              </div>
+              <div class="mb-3">
+                <input type="password" class="form-control form-control-dark" placeholder="Password" id="signupPassword" required>
+              </div>
+              <button type="submit" class="btn btn-gold w-100">Sign Up</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // ==================== GALLERY PAGE LOGIC ====================
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token');
+      const loginRequiredState = document.getElementById('loginRequiredState');
+      const galleryContent = document.getElementById('galleryContent');
+
+      if (!token) {
+        loginRequiredState.style.display = 'block';
+        galleryContent.style.display = 'none';
+        return;
+      }
+
+      loginRequiredState.style.display = 'none';
+      galleryContent.style.display = 'block';
+      loadGallery();
+    });
+
+    async function loadGallery() {
+      const token = localStorage.getItem('token');
+      const galleryLoading = document.getElementById('galleryLoading');
+      const emptyGallery = document.getElementById('emptyGallery');
+      const galleryGrid = document.getElementById('galleryGrid');
+
+      try {
+        const response = await fetch('http://localhost:5000/api/designs', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+
+        galleryLoading.style.display = 'none';
+
+        if (data.designs.length === 0) {
+          emptyGallery.style.display = 'block';
+          galleryGrid.style.display = 'none';
+          document.getElementById('totalDesigns').textContent = '0';
+          document.getElementById('totalRegions').textContent = '0';
+          return;
+        }
+
+        // Update stats
+        document.getElementById('totalDesigns').textContent = data.designs.length;
+        const uniqueRegions = new Set(data.designs.map(d => d.region).filter(Boolean));
+        document.getElementById('totalRegions').textContent = uniqueRegions.size;
+
+        // Render cards
+        galleryGrid.innerHTML = '';
+        data.designs.forEach(design => {
+          const date = new Date(design.createdAt).toLocaleDateString('en-IN', {
+            day: 'numeric', month: 'short', year: 'numeric'
+          });
+
+          const card = document.createElement('div');
+          card.className = 'gallery-card';
+          card.innerHTML = `
+            <div style="position: relative; overflow: hidden;">
+              <img src="${design.imageUrl}" alt="${design.prompt}" class="gallery-card-img" loading="lazy">
+              <div class="gallery-card-overlay">
+                <a href="${design.imageUrl}" target="_blank" class="btn btn-outline-gold btn-sm">
+                  <i class="fas fa-expand me-1"></i> View Full
+                </a>
+              </div>
+            </div>
+            <div class="gallery-card-body">
+              <p class="gallery-card-prompt">${design.prompt}</p>
+              <div class="gallery-card-meta">
+                <div class="gallery-card-tags">
+                  ${design.region ? `<span class="gallery-tag">${design.region}</span>` : ''}
+                  ${design.patternType ? `<span class="gallery-tag">${design.patternType}</span>` : ''}
+                </div>
+                <span class="gallery-card-date">${date}</span>
+              </div>
+              <div class="gallery-card-actions">
+                <a href="${design.imageUrl}" download="textile-design.png" class="btn btn-outline-gold btn-sm">
+                  <i class="fas fa-download me-1"></i>Download
+                </a>
+                <button class="btn btn-delete btn-sm" onclick="deleteDesign('${design._id}')">
+                  <i class="fas fa-trash me-1"></i>Delete
+                </button>
+              </div>
+            </div>
+          `;
+          galleryGrid.appendChild(card);
+        });
+
+        emptyGallery.style.display = 'none';
+        galleryGrid.style.display = 'grid';
+
+      } catch (error) {
+        galleryLoading.style.display = 'none';
+        showToast('Error loading gallery: ' + error.message, 'error');
+      }
+    }
+
+    async function deleteDesign(id) {
+      if (!confirm('Are you sure you want to delete this design?')) return;
+
+      const token = localStorage.getItem('token');
+      try {
+        const response = await fetch(`http://localhost:5000/api/designs/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+
+        showToast('Design deleted successfully', 'success');
+        loadGallery(); // Reload the gallery
+      } catch (error) {
+        showToast('Error deleting design: ' + error.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

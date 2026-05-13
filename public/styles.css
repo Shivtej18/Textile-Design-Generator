@@ -797,6 +797,21 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--color-gold-light);
 }
 
+/* Fix dropdown overflow in navbar */
+.navbar .dropdown-menu.show {
+  overflow: visible;
+  z-index: 1050;
+}
+
+/* Additional overflow fixes for dropdown parent */
+.navbar .dropdown {
+  overflow: visible;
+}
+
+.navbar .dropdown-menu {
+  overflow: visible !important;
+}
+
 /* ==================== UTILITIES ==================== */
 .text-center {
   text-align: center;

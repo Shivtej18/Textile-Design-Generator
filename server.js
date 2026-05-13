@@ -260,6 +260,12 @@ const bcrypt = require("bcryptjs");
 const axios = require("axios");
 const fs = require("fs");
 const FormData = require("form-data");
+const connectDB = require("./config/db");
+const User = require("./models/User");
+const Design = require("./models/Design");
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
 
@@ -283,14 +289,6 @@ app.use(
   )
 );
 
-// ================== STORAGE ==================
-
-const users = {};
-
-const designs = {};
-
-let designId = 1;
-
 // ================== START LOG ==================
 
 console.log("🎨 AI Textile Studio Starting...");
@@ -308,71 +306,27 @@ app.post(
   "/api/auth/register",
 
   async (req, res) => {
-
     try {
+      const { email, password, name } = req.body;
 
-      const {
-        email,
-        password,
-        name
-      } = req.body;
-
-      if (
-        !email ||
-        !password ||
-        !name
-      ) {
-
-        return res.status(400).json({
-          error: "All fields required"
-        });
+      if (!email || !password || !name) {
+        return res.status(400).json({ error: "All fields required" });
       }
 
-      if (users[email]) {
-
-        return res.status(409).json({
-          error: "User already exists"
-        });
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(409).json({ error: "User already exists" });
       }
 
-      const hashedPassword =
-        await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-      users[email] = {
-        email,
-        password: hashedPassword,
-        name
-      };
+      await User.create({ email, password: hashedPassword, name });
 
-      const token = jwt.sign(
+      const token = jwt.sign({ email, name }, JWT_SECRET, { expiresIn: "7d" });
 
-        {
-          email,
-          name
-        },
-
-        JWT_SECRET,
-
-        {
-          expiresIn: "7d"
-        }
-      );
-
-      res.status(201).json({
-
-        token,
-
-        user: {
-          email,
-          name
-        }
-      });
-
+      res.status(201).json({ token, user: { email, name } });
     } catch (error) {
-
-      res.status(500).json({
-        error: error.message
-      });
+      res.status(500).json({ error: error.message });
     }
   }
 );
@@ -383,75 +337,32 @@ app.post(
   "/api/auth/login",
 
   async (req, res) => {
-
     try {
+      const { email, password } = req.body;
 
-      const {
-        email,
-        password
-      } = req.body;
-
-      if (
-        !email ||
-        !password
-      ) {
-
-        return res.status(400).json({
-          error: "Email and password required"
-        });
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password required" });
       }
 
-      const user = users[email];
-
+      const user = await User.findOne({ email });
       if (!user) {
-
-        return res.status(401).json({
-          error: "Invalid email or password"
-        });
+        return res.status(401).json({ error: "Invalid email or password" });
       }
 
-      const validPassword =
-        await bcrypt.compare(
-          password,
-          user.password
-        );
-
+      const validPassword = await bcrypt.compare(password, user.password);
       if (!validPassword) {
-
-        return res.status(401).json({
-          error: "Invalid email or password"
-        });
+        return res.status(401).json({ error: "Invalid email or password" });
       }
 
       const token = jwt.sign(
-
-        {
-          email: user.email,
-          name: user.name
-        },
-
+        { email: user.email, name: user.name },
         JWT_SECRET,
-
-        {
-          expiresIn: "7d"
-        }
+        { expiresIn: "7d" }
       );
 
-      res.json({
-
-        token,
-
-        user: {
-          email: user.email,
-          name: user.name
-        }
-      });
-
+      res.json({ token, user: { email: user.email, name: user.name } });
     } catch (error) {
-
-      res.status(500).json({
-        error: error.message
-      });
+      res.status(500).json({ error: error.message });
     }
   }
 );
@@ -623,70 +534,35 @@ app.post(
   verifyToken,
 
   async (req, res) => {
-
     try {
-
-      const {
-        prompt,
-        region,
-        patternType
-      } = req.body;
+      const { prompt, region, patternType } = req.body;
 
       if (!prompt) {
-
-        return res.status(400).json({
-          error: "Prompt required"
-        });
+        return res.status(400).json({ error: "Prompt required" });
       }
 
-      const imageUrl =
-        await generateAIImage(
-          prompt,
-          region,
-          patternType
-        );
+      const imageUrl = await generateAIImage(prompt, region, patternType);
 
-      const id = designId++;
-
-      designs[id] = {
-
-        id,
-
+      const design = await Design.create({
         prompt,
-
         region,
-
         patternType,
-
         imageUrl,
-
-        userEmail:
-          req.user.email
-      };
+        userEmail: req.user.email
+      });
 
       res.json({
-
         success: true,
-
         design: {
-
-          id,
-
+          id: design._id,
           prompt,
-
           region,
-
           patternType,
-
           imageUrl
         }
       });
-
     } catch (error) {
-
-      res.status(500).json({
-        error: error.message
-      });
+      res.status(500).json({ error: error.message });
     }
   }
 );
@@ -695,23 +571,37 @@ app.post(
 
 app.get(
   "/api/designs",
-
   verifyToken,
+  async (req, res) => {
+    try {
+      const userDesigns = await Design.find({ userEmail: req.user.email })
+        .sort({ createdAt: -1 });
+      res.json({ designs: userDesigns });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
 
-  (req, res) => {
+// ================== DELETE DESIGN ==================
 
-    const userDesigns =
-      Object.values(designs)
-      .filter(
-
-        design =>
-          design.userEmail ===
-          req.user.email
-      );
-
-    res.json({
-      designs: userDesigns
-    });
+app.delete(
+  "/api/designs/:id",
+  verifyToken,
+  async (req, res) => {
+    try {
+      const design = await Design.findById(req.params.id);
+      if (!design) {
+        return res.status(404).json({ error: "Design not found" });
+      }
+      if (design.userEmail !== req.user.email) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+      await Design.findByIdAndDelete(req.params.id);
+      res.json({ message: "Design deleted" });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
 );
 

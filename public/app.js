@@ -135,6 +135,8 @@ function logout() {
 
 function updateAuthUI() {
   const authNav = document.getElementById('authNav');
+  const galleryNavItem = document.getElementById('galleryNavItem');
+
   if (currentUser) {
     authNav.innerHTML = `
       <div class="dropdown">
@@ -142,14 +144,20 @@ function updateAuthUI() {
           <i class="fas fa-user"></i> ${currentUser.name}
         </button>
         <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="profileDropdown">
-          <li><a class="dropdown-item" href="#" onclick="logout()">Logout</a></li>
+          <li><a class="dropdown-item" href="gallery.html"><i class="fas fa-images me-2"></i>My Gallery</a></li>
+          <li><hr class="dropdown-divider" style="border-color: var(--color-border);"></li>
+          <li><a class="dropdown-item" href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
         </ul>
       </div>
     `;
+    // Show My Gallery in nav when logged in
+    if (galleryNavItem) galleryNavItem.style.display = 'block';
   } else {
     authNav.innerHTML = `
       <button class="btn btn-gold btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
     `;
+    // Hide My Gallery from nav when logged out
+    if (galleryNavItem) galleryNavItem.style.display = 'none';
   }
 }
 
