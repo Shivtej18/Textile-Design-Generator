@@ -18,7 +18,7 @@ connectDB();
 const app = express();
 
 const PORT = process.env.PORT || 5000;
-const HOST = "0.0.0.0";
+// const HOST = "0.0.0.0";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "textile_secret_key";
@@ -370,9 +370,9 @@ app.get("*", (req, res) => {
 
 // ================== START SERVER ==================
 
-app.listen(PORT, HOST, () => {
+app.listen(PORT, () => {
 
   console.log(
-    `🚀 Server running on http://${HOST}:${PORT}`
+    `🚀 Server running on http://localhost:${PORT}`
   );
 });
